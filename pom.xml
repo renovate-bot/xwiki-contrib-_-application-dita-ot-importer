@@ -29,7 +29,7 @@
   </parent>
   <groupId>org.xwiki.contrib.dita</groupId>
   <artifactId>application-dita-ot-importer</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
   <name>DITA OT Importer - Parent POM</name>
   <packaging>pom</packaging>
   <description>Imports DITA OT content in XWiki</description>
@@ -37,7 +37,7 @@
     <connection>scm:git:git://github.com/xwiki-contrib/application-dita-ot-importer.git</connection>
     <developerConnection>scm:git:git@github.com:xwiki-contrib/application-dita-ot-importer.git</developerConnection>
     <url>https://github.com/xwiki-contrib/application-dita-ot-importer</url>
-    <tag>HEAD</tag>
+    <tag>application-dita-ot-importer-1.0</tag>
   </scm>
   <developers>
     <developer>
