@@ -1,0 +1,223 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.4" reference="DITAOTHTMLImporter.Code.DITAOTHTMLImporterSheet" locale="">
+  <web>DITAOTHTMLImporter.Code</web>
+  <name>DITAOTHTMLImporterSheet</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title/>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content>{{velocity}}
+#set ($object = $doc.getObject('DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass'))
+#if (!$object)
+  #set ($messageKey = 'ditaothtmlimporter.sheet.description')
+  #set ($messageType = 'info')
+  #if ($doc.documentReference.name != 'DITAOTHTMLAWMSheet')
+    #set ($messageKey = 'ditaothtmlimporter.sheet.noObject')
+    #set ($messageType = 'warning')
+  #end
+  {{$messageType}}
+  $services.localization.render($messageKey)
+  {{/$messageType}}
+  #stop
+#end
+#set ($discard = $xwiki.jsfx.use('uicomponents/edit/editableProperty.js', {
+  'forceSkinAction': true,
+  'language': $xcontext.locale
+}))
+#set ($discard = $doc.use($object))
+#set ($editing = $xcontext.action == 'edit')
+#set ($escapedObjectReference = $escapetool.url($services.model.serialize($doc.getObject('DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass').getReference(), 'local')))
+=$services.localization.render('ditaothtmlimporter.sheet.startImport')=
+#if ($doc.getValue('indexURL') == '' || $doc.getValue('importSpace') == '')
+  {{warning}}
+    $services.localization.render('ditaothtmlimporter.sheet.startImport.defineProperties')
+  {{/warning}}
+#end
+
+[[$services.localization.render('ditaothtmlimporter.sheet.startImport.startManually')&gt;&gt;DITAOTHTMLImporter.Code.StartImportJob||queryString="doImport=true&amp;config=$!{escapedObjectReference}"]]
+
+[[$services.localization.render('ditaothtmlimporter.sheet.startImport.seeLastStatus')&gt;&gt;DITAOTHTMLImporter.ImportStatus||queryString="jobId=$!{escapedObjectReference}"]]
+
+
+$services.localization.render('ditaothtmlimporter.sheet.startImport.startByURL')
+
+{{code language="none"}}
+$xwiki.getXWiki().getExternalURL('DITAOTHTMLImporter.Code.StartImportJob', 'get', "basicauth=1&amp;xpage=plain&amp;doImport=true&amp;jsonResponse=true&amp;config=$!{escapedObjectReference}", $xcontext.context)
+{{/code}}
+=$services.localization.render('ditaothtmlimporter.sheet.configuration')=
+{{html wiki="true" clean="false"}}
+&lt;div class="xform"&gt;
+  &lt;dl&gt;
+    &lt;div class="row"&gt;
+      &lt;div class="col-md-6 col-xs-12"&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('name').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_name"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('name', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('The name of the this configuration'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('name')&lt;/dd&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('indexURL').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_indexURL"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('indexURL', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('The URL to the index document of DITA OT export'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('indexURL')&lt;/dd&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('importSpace').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_importSpace"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('importSpace', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('The space that should be used for the import'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('importSpace')&lt;/dd&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('authToken').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_authToken"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('authToken', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('If needed, the authentication token needed to access the documents of the DITA OT export'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('authToken')&lt;/dd&gt;
+      &lt;/div&gt;
+      &lt;div class="col-md-6 col-xs-12"&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('tagMetadata').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_tagMetadata"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('tagMetadata', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('The names of the meta tags that should be merged into document tags'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('tagMetadata')&lt;/dd&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('creatorMetadata').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_creatorMetadata"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('creatorMetadata', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('The name of the meta tag used for setting the creator of the documents'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('creatorMetadata')&lt;/dd&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('authorMetadata').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_authorMetadata"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('authorMetadata', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('The name of the meta tag used for setting the author of the documents'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('authorMetadata')&lt;/dd&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('creationDateMetadata').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_creationDateMetadata"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('creationDateMetadata', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('The name of the meta tag used for setting the creation date of the documents'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('creationDateMetadata')&lt;/dd&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('creationDateMetadataFormat').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_creationDateMetadataFormat"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('creationDateMetadataFormat', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('The format to use when parsing the creation date metadata'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('creationDateMetadataFormat')&lt;/dd&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('updateDateMetadata').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_updateDateMetadata"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('updateDateMetadata', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('The name of the meta tag used for setting the last updated date of the documents'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('updateDateMetadata')&lt;/dd&gt;
+        &lt;dt #if (!$editing &amp;&amp; $hasEdit)
+          class="editableProperty"
+          data-property="$escapetool.xml($services.model.serialize($object.getProperty('updateDateMetadataFormat').reference))"
+          data-property-type="object"#end&gt;
+          &lt;label#if ($editing) for="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass_0_updateDateMetadataFormat"#end&gt;
+            $escapetool.xml($doc.displayPrettyName('updateDateMetadataFormat', false, false))
+          &lt;/label&gt;
+          &lt;span class="xHint"&gt;
+            $escapetool.xml($services.localization.render('The format to use when parsing the update date metadata'))
+          &lt;/span&gt;
+        &lt;/dt&gt;
+        &lt;dd&gt;$doc.display('updateDateMetadataFormat')&lt;/dd&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/dl&gt;
+&lt;/div&gt;
+{{/html}}
+{{/velocity}}</content>
+</xwikidoc>

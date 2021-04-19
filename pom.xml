@@ -49,6 +49,10 @@
     <xwiki.release.jira.skip>false</xwiki.release.jira.skip>
     <xwiki.issueManagement.system>jira</xwiki.issueManagement.system>
     <xwiki.issueManagement.url>https://jira.xwiki.org/browse/DITAOT</xwiki.issueManagement.url>
+
+    <!-- Dependencies versions -->
+    <jobMacro.version>1.5</jobMacro.version>
+    <jwPlayer.version>2.1.5</jwPlayer.version>
   </properties>
   <modules>
     <module>html</module>

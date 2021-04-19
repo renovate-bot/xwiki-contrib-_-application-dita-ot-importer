@@ -1,0 +1,397 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.4" reference="DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass" locale="">
+  <web>DITAOTHTMLImporter.Code</web>
+  <name>DITAOTHTMLImporterClass</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>DITA OT HTML Importer Class</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content/>
+  <class>
+    <name>DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass</name>
+    <customClass/>
+    <customMapping/>
+    <defaultViewSheet/>
+    <defaultEditSheet/>
+    <defaultWeb/>
+    <nameField/>
+    <validationScript/>
+    <authToken>
+      <algorithm/>
+      <customDisplay/>
+      <disabled>0</disabled>
+      <hint>If needed, the authentication token needed to access the documents of the DITA OT export</hint>
+      <name>authToken</name>
+      <number>4</number>
+      <picker>0</picker>
+      <prettyName>Authentication token</prettyName>
+      <size>30</size>
+      <storageType>Clear</storageType>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.PasswordClass</classType>
+    </authToken>
+    <authorMetadata>
+      <customDisplay/>
+      <disabled>0</disabled>
+      <hint>The name of the meta tag used for setting the author of the documents</hint>
+      <name>authorMetadata</name>
+      <number>7</number>
+      <picker>0</picker>
+      <prettyName>Author metadata</prettyName>
+      <size>30</size>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+    </authorMetadata>
+    <creationDateMetadata>
+      <customDisplay/>
+      <disabled>0</disabled>
+      <hint>The name of the meta tag used for setting the creation date of the documents</hint>
+      <name>creationDateMetadata</name>
+      <number>8</number>
+      <picker>0</picker>
+      <prettyName>Creation date metadata</prettyName>
+      <size>30</size>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+    </creationDateMetadata>
+    <creationDateMetadataFormat>
+      <customDisplay/>
+      <disabled>0</disabled>
+      <hint>The format to use when parsing the creation date metadata</hint>
+      <name>creationDateMetadataFormat</name>
+      <number>9</number>
+      <picker>0</picker>
+      <prettyName>Creation date metadata format</prettyName>
+      <size>30</size>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+    </creationDateMetadataFormat>
+    <creatorMetadata>
+      <customDisplay/>
+      <disabled>0</disabled>
+      <hint>The name of the meta tag used for setting the creator of the documents</hint>
+      <name>creatorMetadata</name>
+      <number>6</number>
+      <picker>0</picker>
+      <prettyName>Creator metadata</prettyName>
+      <size>30</size>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+    </creatorMetadata>
+    <importSpace>
+      <cache>0</cache>
+      <classname/>
+      <customDisplay/>
+      <defaultValue/>
+      <disabled>0</disabled>
+      <displayType>input</displayType>
+      <freeText/>
+      <hint>The space that should be used for the import</hint>
+      <idField/>
+      <largeStorage>0</largeStorage>
+      <multiSelect>0</multiSelect>
+      <name>importSpace</name>
+      <number>3</number>
+      <picker>1</picker>
+      <prettyName>Import space</prettyName>
+      <relationalStorage>1</relationalStorage>
+      <separator> </separator>
+      <separators/>
+      <size>1</size>
+      <sort>none</sort>
+      <sql/>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <valueField/>
+      <classType>com.xpn.xwiki.objects.classes.PageClass</classType>
+    </importSpace>
+    <indexURL>
+      <customDisplay/>
+      <disabled>0</disabled>
+      <hint>The URL to the index document of DITA OT export</hint>
+      <name>indexURL</name>
+      <number>2</number>
+      <picker>0</picker>
+      <prettyName>Index URL</prettyName>
+      <size>30</size>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+    </indexURL>
+    <name>
+      <customDisplay>{{include reference="AppWithinMinutes.Title"/}}</customDisplay>
+      <disabled>0</disabled>
+      <hint>The name of the this configuration</hint>
+      <name>name</name>
+      <number>1</number>
+      <prettyName>Name</prettyName>
+      <script/>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.ComputedFieldClass</classType>
+    </name>
+    <tagMetadata>
+      <cache>0</cache>
+      <classname/>
+      <customDisplay/>
+      <defaultValue/>
+      <disabled>0</disabled>
+      <displayType>input</displayType>
+      <freeText>allowed</freeText>
+      <hint>The names of the meta tags that should be merged into document tags</hint>
+      <idField/>
+      <largeStorage>0</largeStorage>
+      <multiSelect>1</multiSelect>
+      <name>tagMetadata</name>
+      <number>5</number>
+      <picker>0</picker>
+      <prettyName>Tag metadata</prettyName>
+      <relationalStorage>1</relationalStorage>
+      <separator> , </separator>
+      <separators>,</separators>
+      <size>1</size>
+      <sort/>
+      <sql/>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <valueField/>
+      <classType>com.xpn.xwiki.objects.classes.DBListClass</classType>
+    </tagMetadata>
+    <updateDateMetadata>
+      <customDisplay/>
+      <disabled>0</disabled>
+      <hint>The name of the meta tag used for setting the last updated date of the documents</hint>
+      <name>updateDateMetadata</name>
+      <number>10</number>
+      <picker>0</picker>
+      <prettyName>Update date metadata</prettyName>
+      <size>30</size>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+    </updateDateMetadata>
+    <updateDateMetadataFormat>
+      <customDisplay/>
+      <disabled>0</disabled>
+      <hint>The format to use when parsing the update date metadata</hint>
+      <name>updateDateMetadataFormat</name>
+      <number>11</number>
+      <picker>0</picker>
+      <prettyName>Update date metadata format</prettyName>
+      <size>30</size>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+    </updateDateMetadataFormat>
+  </class>
+  <object>
+    <name>DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass</name>
+    <number>0</number>
+    <className>AppWithinMinutes.MetadataClass</className>
+    <guid>2ad9611c-dbed-4052-b0b5-fe50bd120733</guid>
+    <class>
+      <name>AppWithinMinutes.MetadataClass</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <dataSpaceName>
+        <customDisplay/>
+        <disabled>0</disabled>
+        <name>dataSpaceName</name>
+        <number>1</number>
+        <picker>0</picker>
+        <prettyName>Data Space Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </dataSpaceName>
+    </class>
+    <property>
+      <dataSpaceName/>
+    </property>
+  </object>
+  <object>
+    <name>DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass</name>
+    <number>0</number>
+    <className>XWiki.ClassSheetBinding</className>
+    <guid>02bd93dc-9ceb-499f-bc81-f75ee6d22d18</guid>
+    <class>
+      <name>XWiki.ClassSheetBinding</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <sheet>
+        <cache>0</cache>
+        <classname/>
+        <customDisplay/>
+        <disabled>0</disabled>
+        <displayType>input</displayType>
+        <hint/>
+        <idField/>
+        <multiSelect>0</multiSelect>
+        <name>sheet</name>
+        <number>1</number>
+        <picker>1</picker>
+        <prettyName>Sheet</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators/>
+        <size>30</size>
+        <sort>none</sort>
+        <sql/>
+        <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
+        <valueField/>
+        <classType>com.xpn.xwiki.objects.classes.PageClass</classType>
+      </sheet>
+    </class>
+    <property>
+      <sheet>DITAOTHTMLImporter.Code.DITAOTHTMLImporterSheet</sheet>
+    </property>
+  </object>
+  <object>
+    <name>DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass</name>
+    <number>0</number>
+    <className>XWiki.DocumentSheetBinding</className>
+    <guid>f89fc2ae-d3a9-4136-8f68-dfcf6fabca92</guid>
+    <class>
+      <name>XWiki.DocumentSheetBinding</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <sheet>
+        <cache>0</cache>
+        <classname/>
+        <customDisplay/>
+        <disabled>0</disabled>
+        <displayType>input</displayType>
+        <hint/>
+        <idField/>
+        <multiSelect>0</multiSelect>
+        <name>sheet</name>
+        <number>1</number>
+        <picker>1</picker>
+        <prettyName>Sheet</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators/>
+        <size>30</size>
+        <sort>none</sort>
+        <sql/>
+        <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
+        <valueField/>
+        <classType>com.xpn.xwiki.objects.classes.PageClass</classType>
+      </sheet>
+    </class>
+    <property>
+      <sheet>AppWithinMinutes.ClassEditSheet</sheet>
+    </property>
+  </object>
+  <object>
+    <name>DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass</name>
+    <number>1</number>
+    <className>XWiki.DocumentSheetBinding</className>
+    <guid>643ded1b-48c7-4b7c-a33a-a5a519159992</guid>
+    <class>
+      <name>XWiki.DocumentSheetBinding</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <sheet>
+        <cache>0</cache>
+        <classname/>
+        <customDisplay/>
+        <disabled>0</disabled>
+        <displayType>input</displayType>
+        <hint/>
+        <idField/>
+        <multiSelect>0</multiSelect>
+        <name>sheet</name>
+        <number>1</number>
+        <picker>1</picker>
+        <prettyName>Sheet</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators/>
+        <size>30</size>
+        <sort>none</sort>
+        <sql/>
+        <unmodifiable>0</unmodifiable>
+        <validationMessage/>
+        <validationRegExp/>
+        <valueField/>
+        <classType>com.xpn.xwiki.objects.classes.PageClass</classType>
+      </sheet>
+    </class>
+    <property>
+      <sheet>XWiki.ClassSheet</sheet>
+    </property>
+  </object>
+</xwikidoc>

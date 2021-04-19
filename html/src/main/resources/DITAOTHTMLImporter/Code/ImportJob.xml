@@ -1,0 +1,303 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.4" reference="DITAOTHTMLImporter.Code.ImportJob" locale="">
+  <web>DITAOTHTMLImporter.Code</web>
+  <name>ImportJob</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>ImportJob</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content>{{include reference="DITAOTHTMLImporter.Code.ImportHelper"/}}
+
+{{groovy}}
+  import com.xpn.xwiki.api.Document;
+  import com.xpn.xwiki.api.Context;
+  import com.xpn.xwiki.api.XWiki;
+
+  import java.util.ArrayDeque;
+  import java.util.List;
+  import java.util.Arrays;
+  import java.util.ArrayList;
+  import java.util.AbstractMap;
+  import java.util.Queue;
+  import java.io.StringReader;
+
+  import org.xwiki.rendering.parser.Parser;
+  import org.xwiki.rendering.renderer.printer.DefaultWikiPrinter;
+  import org.xwiki.rendering.renderer.PrintRenderer;
+  import org.xwiki.rendering.renderer.PrintRendererFactory;
+  import org.xwiki.rendering.block.XDOM;
+  import org.xwiki.script.service.ScriptServiceManager
+  import org.xwiki.model.reference.DocumentReference;
+  import org.xwiki.model.reference.ObjectReference;
+  import org.xwiki.xml.html.HTMLCleaner;
+
+  import org.slf4j.Logger;
+
+  import org.apache.commons.lang3.StringUtils;
+
+  import org.jsoup.Jsoup;
+  import org.jsoup.nodes.Element;
+  import org.jsoup.nodes.Attributes;
+  import org.jsoup.select.Elements;
+
+  public class ImportJob
+  {
+    private static final LOGGER_NAME = 'DITAOTHTMLImporter.Code.ImportJob';
+
+    private Context xcontext;
+    private XWiki xwiki;
+    private ScriptServiceManager services;
+    private Logger logger;
+
+    private ImportHelper ih;
+
+    private Parser parser;
+    private HTMLCleaner htmlCleaner;
+    private PrintRendererFactory printRendererFactory;
+
+    private Queue&lt;AbstractMap.SimpleImmutableEntry&lt;DocumentReference, URL&gt;&gt; documentsToUpdate = new ArrayDeque&lt;&gt;();
+    private List&lt;DocumentReference&gt; documentsUpdated = new ArrayList&lt;&gt;();
+
+    private List&lt;String&gt; tagMetadata;
+    private String creatorMetadata;
+    private String authorMetadata;
+    private String creationDateMetadata;
+    private String creationDateMetadataFormat;
+    private String updateDateMetadata;
+    private String updateDateMetadataFormat;
+
+    private URL baseDocumentURL;
+    private DocumentReference baseDocument;
+
+    public ImportJob(Context xcontext, XWiki xwiki, ScriptServiceManager services, ObjectReference configurationReference)
+    {
+      this.xcontext = xcontext;
+      this.xwiki = xwiki;
+      this.services = services;
+      this.logger = services.logging.getLogger(LOGGER_NAME);
+      this.parser = services.component.getComponentManager().getInstance(Parser.class, "html/4.01");
+      this.htmlCleaner = services.component.getComponentManager().getInstance(HTMLCleaner.class);
+      this.printRendererFactory = services.component.getComponentManager().getInstance(PrintRendererFactory.class, "xwiki/2.1");
+
+      services.logging.setLevel(LOGGER_NAME, org.xwiki.logging.LogLevel.INFO);
+
+      // Load the configuration
+      logger.info('Loading configuration');
+      Document configDoc = xwiki.getDocument(configurationReference.getDocumentReference());
+      Object configObj = configDoc.getObject(configurationReference);
+
+      this.baseDocumentURL = new URL(configObj.getValue('indexURL')).toURI().normalize().toURL();
+      this.baseDocument = services.model.resolveDocument(configObj.getValue('importSpace'));
+      this.tagMetadata = configObj.getValue('tagMetadata');
+      this.creatorMetadata = configObj.getValue('creatorMetadata');
+      this.authorMetadata = configObj.getValue('authorMetadata');
+      this.creationDateMetadata = configObj.getValue('creationDateMetadata');
+      this.creationDateMetadataFormat = configObj.getValue('creationDateMetadataFormat');
+      this.updateDateMetadata = configObj.getValue('updateDateMetadata');
+      this.updateDateMetadataFormat = configObj.getValue('updateDateMetadataFormat');
+
+      logger.info('Base URL : [{}]', baseDocumentURL);
+      logger.info('Tag Metadata : [{}]', tagMetadata);
+
+      this.ih = new ImportHelper(xcontext, xwiki, services, configObj.getValue('authToken'), baseDocumentURL, baseDocument);
+    }
+
+    public void doImport()
+    {
+      logger.info('Starting DITA OT HTML import job');
+      logger.info('Base Document URL : [{}]', baseDocumentURL);
+      logger.info('Base Document : [{}]', baseDocument);
+
+      // First step : migrate index.html
+      migrateDocument(baseDocument, baseDocumentURL);
+
+      // Then, migrate all the other pages :
+      while (documentsToUpdate.peek() != null) {
+        AbstractMap.SimpleImmutableEntry&lt;DocumentReference, URL&gt; entry = documentsToUpdate.poll();
+        migrateDocument(entry.getKey(), entry.getValue());
+      }
+
+      // Finally, remove everything that has not been migrated
+      deleteNonMigratedDocuments();
+
+      logger.info('Ending DITA OT HTML import job');
+    }
+
+    private void migrateDocument(DocumentReference documentReference, URL documentURL)
+    {
+      try {
+        // First, mark this page as updated, so that it doesn't get added to the list of pages to update
+        documentsUpdated.add(documentReference);
+
+        Document pageDoc = xwiki.getDocument(documentReference);
+
+        // Get the page content
+        org.jsoup.nodes.Document page = Jsoup.parse(ih.getContentFromURL(documentURL));
+        String pageContent = preparePageContent(page);
+
+        updateDocumentContent(pageDoc, documentURL, pageContent);
+
+        if (pageDoc.getObject('DITAOTHTMLImporter.Code.DITAOTHTMLContentClass') == null) {
+          Object contentObject = pageDoc.newObject('DITAOTHTMLImporter.Code.DITAOTHTMLContentClass');
+          contentObject.set('url', documentURL.toString());
+        }
+
+        updateDocumentMetadata(page, pageDoc);
+
+        pageDoc.getDocument().setMinorEdit(false);
+        pageDoc.getDocument().setContentDirty(false);
+        pageDoc.getDocument().setMetaDataDirty(false);
+        pageDoc.getDocument().incrementVersion();
+        xwiki.getXWiki().saveDocument(pageDoc.getDocument(), xcontext.getContext());
+
+        logger.info('Document [{}] updated.', documentReference);
+      } catch (Exception e) {
+        logger.error('Error while importing [{}]. The document has not been migrated.', documentReference, e)
+      }
+    }
+
+    private void updateDocumentContent(Document pageDoc, URL documentURL, String pageContent)
+    {
+      // Convert to xwiki/2.1
+      try {
+        XDOM xdom = parser.parse(new java.io.StringReader(pageContent));
+
+        // Go through the document to be imported, and identify any link that points to another document.
+        // If this link is not yet known, we'll add the document to the queue of documents to import.
+        ih.convertAndRegisterLinks(pageDoc.getDocumentReference(), documentURL, xdom, documentsToUpdate, documentsUpdated);
+
+        // Scan again the document, this time looking for media resources to import
+        ih.convertAndUpdateMediaResources(pageDoc, documentURL, xdom);
+
+        DefaultWikiPrinter printer = new DefaultWikiPrinter();
+        PrintRenderer renderer = printRendererFactory.createRenderer(printer);
+        xdom.traverse(renderer);
+        ((Flushable) renderer).flush();
+
+        String wikiContent = printer.toString();
+        pageDoc.setContent(wikiContent);
+
+      } catch (e) {
+        logger.error("Error parsing HTML content", e);
+      }
+    }
+
+    // Set the document metadata
+    private void updateDocumentMetadata(org.jsoup.nodes.Document page, Document pageDoc)
+    {
+      pageDoc.setTitle(page.title());
+
+      List&lt;String&gt; tags = new ArrayList&lt;&gt;();
+      for (Element element : page.getElementsByTag('meta')) {
+        Attributes attributes = element.attributes();
+        String name = attributes.get('name');
+        String content = attributes.get('content');
+
+        if (!StringUtils.isEmpty(content)) {
+          if (tagMetadata.contains(name)) {
+            tags.addAll(content.split(','));
+          }
+
+          if (name.equals(creationDateMetadata)) {
+            pageDoc.getDocument().setCreationDate(Date.parse(creationDateMetadataFormat, content));
+          }
+
+          if (name.equals(updateDateMetadata)) {
+            pageDoc.getDocument().setDate(Date.parse(updateDateMetadataFormat, content));
+            pageDoc.getDocument().setContentUpdateDate(Date.parse(updateDateMetadataFormat, content));
+          }
+
+          if (name.equals(creatorMetadata)) {
+             pageDoc.getDocument().setCreator(content);
+         }
+
+          if (name.equals(authorMetadata)) {
+            pageDoc.getDocument().setAuthor(content);
+            pageDoc.getDocument().setContentAuthor(content);
+          }
+        }
+      }
+      pageDoc.getDocument().setTags(StringUtils.join(tags, ','), xcontext.getContext());
+    }
+
+    private String preparePageContent(org.jsoup.nodes.Document page)
+    {
+      // Remove the first h1 title in the page, as it duplicates the page title. As this is also the only h1, shift all the other titles of one level
+      if (page.getElementsByTag('h1').size() == 1 &amp;&amp; page.getElementsByTag('h1').first().text().equals(page.title())) {
+        Element firstTitle = page.getElementsByTag('h1').first();
+        firstTitle.parent().removeChild(firstTitle);
+
+        List&lt;String&gt; titleNumbers = Arrays.asList('h1', 'h2', 'h3', 'h4', 'h5', 'h6');
+        for (int i = 1; i &lt; titleNumbers.size(); i++) {
+          for (Element element : page.getElementsByTag(titleNumbers.get(i))) {
+            element.tagName(titleNumbers.get(i-1));
+          }
+        }
+      }
+
+      // Transform any of the video blocks into divs with a specific class, so that they can be re-transformed afterwards when the content of the page is parsed to XDOM
+      for (Element element : page.getElementsByTag('video')) {
+        Element newElement = new Element('div');
+        newElement.attr('data-ditaothtml-type', 'video');
+        newElement.attr('data-ditaothtml-src', element.getElementsByTag('source').first().attributes().get('src'));
+        element.parent().replaceChild(element, newElement);
+      }
+
+      // Transform any of the article blocks into divs, so that they get parsed properly
+      for (Element element : page.getElementsByTag('article')) {
+        element.tagName('div');
+      }
+
+      return page.body().html();
+    }
+
+    private void deleteNonMigratedDocuments()
+    {
+      logger.info('Deleting non-migrated documents');
+      // Compute the space name with the base document reference
+      // Unfortunately, it would not help to serialize the lastSpaceReference as it would render as "Space xxxxx";
+      String space = StringUtils.removeEnd(services.model.serialize(baseDocument, 'local'), '.WebHome');
+      // Look for every document in the configured space, if a document is not in the list of updated documents, then we will need to delete it
+      List&lt;String&gt; documents = services.query.hql("select obj.name from BaseObject obj where obj.className = 'DITAOTHTMLImporter.Code.DITAOTHTMLContentClass' and obj.name like :space group by obj.name").bindValue('space', space + '.%').execute();
+
+      for (String document : documents) {
+        if (!documentsUpdated.contains(services.model.resolveDocument(document))) {
+          Document documentToDelete = xwiki.getDocument(document);
+          logger.info('Deleting document [{}]', documentToDelete.getDocumentReference());
+          xwiki.getXWiki().deleteDocument(documentToDelete.getDocument(), false, xcontext.getContext());
+        }
+      }
+    }
+  }
+{{/groovy}}</content>
+</xwikidoc>

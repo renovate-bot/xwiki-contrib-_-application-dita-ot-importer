@@ -1,0 +1,267 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!--
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+-->
+
+<xwikidoc version="1.4" reference="DITAOTHTMLImporter.Code.ImportHelper" locale="">
+  <web>DITAOTHTMLImporter.Code</web>
+  <name>ImportHelper</name>
+  <language/>
+  <defaultLanguage/>
+  <translation>0</translation>
+  <creator>xwiki:XWiki.Admin</creator>
+  <parent>WebHome</parent>
+  <author>xwiki:XWiki.Admin</author>
+  <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
+  <version>1.1</version>
+  <title>ImportHelper</title>
+  <comment/>
+  <minorEdit>false</minorEdit>
+  <syntaxId>xwiki/2.1</syntaxId>
+  <hidden>true</hidden>
+  <content>{{groovy}}
+  import com.xpn.xwiki.api.Context;
+  import com.xpn.xwiki.api.XWiki;
+  import com.xpn.xwiki.api.Document;
+  import com.xpn.xwiki.api.Attachment;
+  import org.xwiki.script.service.ScriptServiceManager
+  import org.slf4j.Logger;
+
+  import org.xwiki.model.reference.DocumentReference;
+  import org.xwiki.model.reference.PageReference;
+
+  import org.xwiki.rendering.block.AbstractBlock;
+  import org.xwiki.rendering.block.Block;
+  import org.xwiki.rendering.block.LinkBlock;
+  import org.xwiki.rendering.block.ImageBlock;
+  import org.xwiki.rendering.block.GroupBlock;
+  import org.xwiki.rendering.block.MacroBlock;
+  import org.xwiki.rendering.block.XDOM;
+  import org.xwiki.rendering.block.match.BlockMatcher;
+  import org.xwiki.rendering.block.match.OrBlockMatcher;
+  import org.xwiki.rendering.block.match.ClassBlockMatcher;
+  import org.xwiki.rendering.listener.reference.DocumentResourceReference;
+  import org.xwiki.rendering.listener.reference.ResourceReference;
+  import org.xwiki.rendering.listener.reference.ResourceType;
+
+  import org.apache.commons.lang3.StringUtils;
+  import org.apache.commons.io.FilenameUtils;
+
+  import java.nio.file.Path;
+  import java.nio.file.Paths;
+  import java.io.InputStream;
+  import java.net.URL;
+  import java.net.URI;
+
+  import java.util.Queue;
+  import java.util.AbstractMap;
+
+  public class ImportHelper
+  {
+    private static final LOGGER_NAME = 'DITAOTHTMLImporter.Code.ImportHelper';
+
+    private Context xcontext;
+    private XWiki xwiki;
+    private ScriptServiceManager services;
+    private Logger logger;
+    private URL baseDocumentURL;
+    private DocumentReference baseReference;
+    private String token;
+
+    public ImportHelper(Context xcontext, XWiki xwiki, ScriptServiceManager services, String token, URL baseDocumentURL, DocumentReference baseReference)
+    {
+      this.xcontext = xcontext;
+      this.xwiki = xwiki;
+      this.services = services;
+      this.logger = services.logging.getLogger(LOGGER_NAME);
+      this.baseDocumentURL = baseDocumentURL;
+      this.baseReference = baseReference;
+      this.token = token;
+    }
+
+    public String getContentFromURL(URL pageURL)
+    {
+      def conn = pageURL.openConnection()
+      if (!token.isEmpty()) {
+        conn.setRequestProperty("Authorization", "token ${token}");
+      }
+      if(conn.responseCode == 200) {
+        return conn.content.text;
+      } else {
+        logger.error('Failed to get contents from [{}] : [{}] - [{}]', pageURL, conn.responseCode, conn.responseMessage);
+        return '';
+      }
+    }
+
+    public InputStream getContentAsIS(URL pageURL)
+    {
+      def conn = pageURL.openConnection()
+      if (!token.isEmpty()) {
+        conn.setRequestProperty("Authorization", "token ${token}");
+      }
+      if(conn.responseCode == 200) {
+        return conn.getInputStream();
+      } else {
+        logger.error('Failed to get input stream from [{}] : [{}] - [{}]', pageURL, conn.responseCode, conn.responseMessage);
+        return null;
+      }
+    }
+
+    // Will transform a link to an equivalent document reference for the imported page
+    // It's important to note that this will only work for links and pages that are contained within the imported folder (the imported space in XWiki)
+    // It is currently not possible to link to the index of the space.
+    public DocumentReference computeDocumentReferenceFromLink(DocumentReference currentDocumentReference, String link)
+    {
+      // Get the base name of the link
+      String baseName = FilenameUtils.getBaseName(link);
+      // Escape any dots that could cause issues
+      baseName = StringUtils.replace(baseName, '.', '\\.');
+      // Add .WebHome to create non-terminal pages
+      baseName = baseName + '.WebHome';
+      // Add a dot a the beginning of the reference to signify that it will be relative
+      baseName = '.' + baseName;
+
+      return services.model.resolveDocument(baseName, baseReference);
+    }
+
+    public void convertAndRegisterLinks(DocumentReference currentDocumentReference,
+                                        URL currentDocumentURL,
+                                        XDOM xdom,
+                                        Queue&lt;AbstractMap.SimpleImmutableEntry&lt;DocumentReference, URL&gt;&gt; documentsToUpdate,
+                                        List&lt;DocumentReference&gt; documentsUpdated)
+    {
+      // Iterate through every link found in the XDOM
+      for (Block block : xdom.getBlocks(new ClassBlockMatcher(LinkBlock.class), Block.Axes.DESCENDANT)) {
+        // Two cases :
+        // Either the link is a path, in which case we need to resolve it into its equivalent PageReference
+        // Either the link is a url, in which case we keep it as-is
+        LinkBlock linkBlock = (LinkBlock) block;
+
+        if (linkBlock.getReference().getType().equals(ResourceType.PATH)) {
+          ResourceReference rr = linkBlock.getReference();
+
+          URI uri = currentDocumentURL.toURI().resolve(rr.getReference());
+          if (uri.getPath().endsWith('.html')) {
+            // Extract the anchor of the URL
+            String anchor = uri.toURL().getRef();
+
+            DocumentReference targetDocumentReference = computeDocumentReferenceFromLink(currentDocumentReference, uri.getPath());
+
+            // If the document is not listed in the documents to be imported, register it now
+            // If the URL found is equal to the base document url, we don't need to add the document, as it is imported first
+            boolean needsAddition = (!uri.getPath().equals(baseDocumentURL.getPath()));
+            if (needsAddition) {
+              for (AbstractMap.SimpleImmutableEntry&lt;DocumentReference, URL&gt; entry : documentsToUpdate) {
+                if (entry.getKey().equals(targetDocumentReference)) {
+                  needsAddition = false;
+                  break;
+                }
+              }
+            }
+
+            if (needsAddition &amp;&amp; !documentsUpdated.contains(targetDocumentReference)) {
+              documentsToUpdate.add(new AbstractMap.SimpleImmutableEntry(targetDocumentReference, uri.toURL()));
+            }
+
+            rr.setType(ResourceType.DOCUMENT);
+            rr.setReference(services.model.serialize(targetDocumentReference));
+
+            // If the link had an anchor, we need to port it also to the new reference
+            if (anchor) {
+              rr.setParameter(DocumentResourceReference.ANCHOR, anchor);
+            }
+          }
+        }
+      }
+    }
+
+    public void convertAndUpdateMediaResources(Document currentDocument,
+                                               URL currentDocumentURL,
+                                               XDOM xdom)
+    {
+      // Go through each block, trying to match either :
+      // * Links that point to media resources
+      // * Images that include a local media resource
+      // * Special tags inserted before parsing, that denote tags that are not supported by the parser used
+      // Maybe use GroupBlock
+      List&lt;BlockMatcher&gt; matchers = Arrays.asList(new ClassBlockMatcher(LinkBlock.class), new ClassBlockMatcher(ImageBlock.class), new ClassBlockMatcher(GroupBlock.class));
+      URL attURL;
+      String fileName;
+      for (Block block : xdom.getBlocks(new OrBlockMatcher(matchers), Block.Axes.DESCENDANT)) {
+        if (block instanceof LinkBlock &amp;&amp; ((LinkBlock) block).getReference().getType().equals(ResourceType.PATH)) {
+          // Verify that the LinkBlock is pointing to a media resource, and not to another page
+          LinkBlock linkBlock = (LinkBlock) block;
+          String reference = linkBlock.getReference().getReference();
+          if (!reference.endsWith('.html')) {
+            attURL = computeAttachmentURL(currentDocumentURL, reference);
+            fileName = FilenameUtils.getName(attURL.getPath());
+            downloadAndAddAttachment(currentDocument, fileName, attURL);
+
+            linkBlock.getReference().setType(ResourceType.ATTACHMENT);
+            linkBlock.getReference().setReference(fileName);
+          }
+        } else if (block instanceof ImageBlock) {
+          attURL = computeAttachmentURL(currentDocumentURL, block.getReference().getReference());
+          fileName = FilenameUtils.getName(attURL.getPath());
+          downloadAndAddAttachment(currentDocument, fileName, attURL);
+
+          ImageBlock imageBlock = (ImageBlock) block;
+          imageBlock.getReference().setType(ResourceType.ATTACHMENT);
+          imageBlock.getReference().setReference(fileName);
+        } else if (block instanceof GroupBlock &amp;&amp; block.getParameter('data-ditaothtml-type').equals('video')) {
+          attURL = computeAttachmentURL(currentDocumentURL, block.getParameter('data-ditaothtml-src'));
+          fileName = FilenameUtils.getName(attURL.getPath());
+          downloadAndAddAttachment(currentDocument, fileName, attURL);
+
+          // We need to replace the block with an actual video macro
+          MacroBlock videoBlock = new MacroBlock('jwplayer', [attachment: fileName], false);
+          block.getParent().replaceChild(videoBlock, block);
+        }
+      }
+    }
+
+    private URL computeAttachmentURL(URL currentDocumentURL, String path)
+    {
+      return currentDocumentURL.toURI().resolve(path).toURL();
+    }
+
+    private void downloadAndAddAttachment(Document currentDocument, String attachmentName, URL attachmentURL)
+    {
+      // Check if the attachment exists in the page
+      Attachment att = currentDocument.getAttachment(attachmentName);
+      if (att != null) {
+        // Check the size of the local and the remote attachment, if they match, we don't update the local attachment
+        long localAttachmentSize = att.getLongSize();
+        long remoteAttachmentSize = attachmentURL.openConnection().getHeaderFieldLong('Content-Length', 0);
+        if (localAttachmentSize == remoteAttachmentSize) {
+          logger.info('Skipping the download of the attachment [{}] in document [{}] as it already exists and has the same size as the remote', attachmentName, currentDocument);
+          return;
+        }
+      }
+
+      // Perform the actual attachment download
+      logger.info('Downloading attachment from [{}] to [{}] in [{}]', attachmentURL, attachmentName, currentDocument);
+      InputStream is = getContentAsIS(attachmentURL);
+      currentDocument.addAttachment(attachmentName, is);
+      is.close();
+    }
+  }
+{{/groovy}}</content>
+</xwikidoc>

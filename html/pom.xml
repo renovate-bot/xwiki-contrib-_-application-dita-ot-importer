@@ -31,4 +31,56 @@
   <name>DITA OT Importer - HTML Importer</name>
   <packaging>xar</packaging>
   <description>Allows to import DITA OT contents from an HTML export</description>
+  <dependencies>
+    <dependency>
+      <groupId>org.xwiki.rendering</groupId>
+      <artifactId>xwiki-rendering-syntax-html</artifactId>
+      <version>${rendering.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.contrib</groupId>
+      <artifactId>macro-job</artifactId>
+      <version>${jobMacro.version}</version>
+      <scope>runtime</scope>
+      <!-- Exclude platform dependencies
+           As the Job Macro depends on XWiki 7, this will pull banned dependencies and
+           dependencies that will fail the upper bounds requirements -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.xwiki.platform</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.xwiki.rendering</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.xwiki.commons</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.xwiki.contrib</groupId>
+      <artifactId>macro-jwplayer</artifactId>
+      <version>${jwPlayer.version}</version>
+      <scope>runtime</scope>
+      <type>xar</type>
+      <!-- Exclude platform dependencies, same reason as for the Job Macro -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.xwiki.platform</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.xwiki.rendering</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.xwiki.commons</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
 </project>
