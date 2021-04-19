@@ -83,4 +83,17 @@
       </exclusions>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.xwiki.commons</groupId>
+        <artifactId>xwiki-commons-tool-xar-plugin</artifactId>
+        <configuration>
+          <contentPages>
+            <contentPage>.*/DITAOTHTMLImporter/WebHome\.xml</contentPage>
+          </contentPages>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
