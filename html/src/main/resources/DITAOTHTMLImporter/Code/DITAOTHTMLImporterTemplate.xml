@@ -245,7 +245,7 @@
       <creationDateMetadata>DC.date.created</creationDateMetadata>
     </property>
     <property>
-      <creationDateMetadataFormat>YYYY-MM-DD</creationDateMetadataFormat>
+      <creationDateMetadataFormat>yyyy-MM-dd</creationDateMetadataFormat>
     </property>
     <property>
       <creatorMetadata>DC.creator</creatorMetadata>
@@ -270,7 +270,7 @@
       <updateDateMetadata>DC.date.modified</updateDateMetadata>
     </property>
     <property>
-      <updateDateMetadataFormat>YYYY-MM-DD</updateDateMetadataFormat>
+      <updateDateMetadataFormat>yyyy-MM-dd</updateDateMetadataFormat>
     </property>
   </object>
 </xwikidoc>
