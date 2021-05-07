@@ -92,11 +92,17 @@ ditaothtmlimporter.livetable.creationDateMetadata=Creation date metadata
 ditaothtmlimporter.livetable.creationDateMetadataFormat=Creation date metadata format
 ditaothtmlimporter.livetable.updateDateMetadata=Update date metadata
 ditaothtmlimporter.livetable.updateDateMetadataFormat=Update date metadata format
+ditaothtmlimporter.livetable.selectForBulkAction=Select
 
 # Other keys
 ditaothtmlimporter.entry.name=DITA OT HTML Import configuration
-
 ditaothtmlimporter.importStatus.title=Import status
+
+# Home page
+ditaothtmlimporter.home.title=DITA OT HTML Importer
+ditaothtmlimporter.home.startBulkImport=Start a bulk import
+ditaothtmlimporter.home.viewLastBulkImportStatus=View the last bulk import status
+ditaothtmlimporter.home.failedToStartAction=The bulk import failed to start. Please check every configuration included in the bulk import and try again
 
 # Deprecated keys
 ditaothtmlimporter.dataSpace.title=Data</content>

@@ -74,6 +74,8 @@
   {
     private static final LOGGER_NAME = 'DITAOTHTMLImporter.Code.ImportJob';
 
+    private static final DITA_OT_CONTENT_CLASS = 'DITAOTHTMLImporter.Code.DITAOTHTMLContentClass';
+
     private Context xcontext;
     private XWiki xwiki;
     private ScriptServiceManager services;
@@ -88,7 +90,7 @@
     private Queue&lt;AbstractMap.SimpleImmutableEntry&lt;DocumentReference, URL&gt;&gt; documentsToUpdate = new ArrayDeque&lt;&gt;();
     private List&lt;DocumentReference&gt; documentsUpdated = new ArrayList&lt;&gt;();
 
-    private List&lt;String&gt; tagMetadata;
+    private List&lt;String&gt; tagMetadata = new ArrayList&lt;&gt;();
     private String creatorMetadata;
     private String authorMetadata;
     private String creationDateMetadata;
@@ -118,16 +120,21 @@
 
       this.baseDocumentURL = new URL(configObj.getValue('indexURL')).toURI().normalize().toURL();
       this.baseDocument = services.model.resolveDocument(configObj.getValue('importSpace'));
-      this.tagMetadata = configObj.getValue('tagMetadata');
-      this.creatorMetadata = configObj.getValue('creatorMetadata');
-      this.authorMetadata = configObj.getValue('authorMetadata');
-      this.creationDateMetadata = configObj.getValue('creationDateMetadata');
+
+      List&lt;String&gt; tagsMt = configObj.getValue('tagMetadata');
+      tagsMt.each { it -&gt; tagMetadata.add(it.trim().toUpperCase()); }
+
+      this.creatorMetadata = configObj.getValue('creatorMetadata').toUpperCase();
+      this.authorMetadata = configObj.getValue('authorMetadata').toUpperCase();
+      this.creationDateMetadata = configObj.getValue('creationDateMetadata').toUpperCase();
       this.creationDateMetadataFormat = configObj.getValue('creationDateMetadataFormat');
-      this.updateDateMetadata = configObj.getValue('updateDateMetadata');
+      this.updateDateMetadata = configObj.getValue('updateDateMetadata').toUpperCase();
       this.updateDateMetadataFormat = configObj.getValue('updateDateMetadataFormat');
 
       logger.info('Base URL : [{}]', baseDocumentURL);
       logger.info('Tag Metadata : [{}]', tagMetadata);
+      logger.info('Tag Metadata size : [{}]', tagMetadata.size());
+      logger.info('Contains Keywords : [{}]', tagMetadata.contains('KEYWORDS'))
 
       this.ih = new ImportHelper(xcontext, xwiki, services, configObj.getValue('authToken'), baseDocumentURL, baseDocument);
     }
@@ -167,8 +174,8 @@
 
         updateDocumentContent(pageDoc, documentURL, pageContent);
 
-        if (pageDoc.getObject('DITAOTHTMLImporter.Code.DITAOTHTMLContentClass') == null) {
-          Object contentObject = pageDoc.newObject('DITAOTHTMLImporter.Code.DITAOTHTMLContentClass');
+        if (pageDoc.getObject(DITA_OT_CONTENT_CLASS) == null) {
+          Object contentObject = pageDoc.newObject(DITA_OT_CONTENT_CLASS);
           contentObject.set('url', documentURL.toString());
         }
 
@@ -217,15 +224,40 @@
     {
       pageDoc.setTitle(page.title());
 
-      List&lt;String&gt; tags = new ArrayList&lt;&gt;();
+      // Prepare the list of tags that are managed by the importer
+      def managedTagsList = pageDoc.getObject(DITA_OT_CONTENT_CLASS).getValue('managedTags');
+      List&lt;String&gt; managedTags = (managedTagsList instanceof String) ? Arrays.asList(managedTagsList) : managedTagsList;;
+      List&lt;String&gt; newManagedTags = new ArrayList&lt;&gt;();
+
+      def pageTagList = pageDoc.getTagList()
+      List&lt;String&gt; tags;
+      if (pageTagList == null) {
+        tags = new ArrayList&lt;&gt;();
+      } else {
+        tags = (pageTagList instanceof String) ? Arrays.asList(pageTagList) : pageTagList;
+      }
+
+      if (managedTags != null) {
+        tags.removeAll(managedTags);
+      }
+
       for (Element element : page.getElementsByTag('meta')) {
         Attributes attributes = element.attributes();
-        String name = attributes.get('name');
+        String name = attributes.get('name').toUpperCase();
         String content = attributes.get('content');
+        String dotEscapedContent = content.replaceAll('\\.', '\\\\.');
 
         if (!StringUtils.isEmpty(content)) {
           if (tagMetadata.contains(name)) {
-            tags.addAll(content.split(','));
+            List&lt;String&gt; splittedContent = content.split(',');
+            splittedContent.each { it -&gt;
+              def trimmedIt = it.trim();
+              if (!tags.contains(trimmedIt)) {
+                tags.add(trimmedIt);
+              }
+
+              newManagedTags.add(trimmedIt);
+            }
           }
 
           if (name.equals(creationDateMetadata)) {
@@ -238,16 +270,18 @@
           }
 
           if (name.equals(creatorMetadata)) {
-             pageDoc.getDocument().setCreator(content);
+             pageDoc.getDocument().setCreator(dotEscapedContent);
          }
 
           if (name.equals(authorMetadata)) {
-            pageDoc.getDocument().setAuthor(content);
-            pageDoc.getDocument().setContentAuthor(content);
+            pageDoc.getDocument().setAuthor(dotEscapedContent);
+            pageDoc.getDocument().setContentAuthor(dotEscapedContent);
           }
         }
       }
-      pageDoc.getDocument().setTags(StringUtils.join(tags, ','), xcontext.getContext());
+
+      pageDoc.getDocument().setTags(StringUtils.join(tags, '|'), xcontext.getContext());
+      pageDoc.getObject(DITA_OT_CONTENT_CLASS).set('managedTags', newManagedTags);
     }
 
     private String preparePageContent(org.jsoup.nodes.Document page)
@@ -288,7 +322,7 @@
       // Unfortunately, it would not help to serialize the lastSpaceReference as it would render as "Space xxxxx";
       String space = StringUtils.removeEnd(services.model.serialize(baseDocument, 'local'), '.WebHome');
       // Look for every document in the configured space, if a document is not in the list of updated documents, then we will need to delete it
-      List&lt;String&gt; documents = services.query.hql("select obj.name from BaseObject obj where obj.className = 'DITAOTHTMLImporter.Code.DITAOTHTMLContentClass' and obj.name like :space group by obj.name").bindValue('space', space + '.%').execute();
+      List&lt;String&gt; documents = services.query.hql("select obj.name from BaseObject obj where obj.className = '${DITA_OT_CONTENT_CLASS}' and obj.name like :space group by obj.name").bindValue('space', space + '.%').execute();
 
       for (String document : documents) {
         if (!documentsUpdated.contains(services.model.resolveDocument(document))) {

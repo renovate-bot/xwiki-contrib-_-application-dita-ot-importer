@@ -31,18 +31,19 @@
   <author>xwiki:XWiki.Admin</author>
   <contentAuthor>xwiki:XWiki.Admin</contentAuthor>
   <version>1.1</version>
-  <title>DITA OT HTML Importer</title>
+  <title>$services.localization.render('ditaothtmlimporter.home.title')</title>
   <comment/>
   <minorEdit>false</minorEdit>
   <syntaxId>xwiki/2.1</syntaxId>
   <hidden>false</hidden>
   <content>{{velocity}}
 #set ($columnsProperties = {
-  'doc.title': {"link":"view"},
-  'doc.location': {"html":true},
+  'doc.fullName': {'type': 'hidden'},
+  'doc.title': {'link':'view'},
+  'doc.location': {'html':true},
   'doc.date': {},
-  'doc.author': {"link":"author"},
-  '_actions': {"sortable":false,"filterable":false,"html":true,"actions":["edit","delete"]}
+  'doc.author': {'link':'author'},
+  '_actions': {'sortable':false,'filterable':false,'html':true,'actions':['edit','delete']}
 })
 #set ($options = {
   'className': 'DITAOTHTMLImporter.Code.DITAOTHTMLImporterClass',
@@ -53,7 +54,121 @@
   'selectedColumn': 'doc.title',
   'defaultOrder': 'asc'
 })
-#set ($columns = ['doc.title', 'doc.location', 'doc.date', 'doc.author', '_actions'])
+#set ($columns = ['doc.fullName', 'doc.title', 'doc.location', 'doc.date', 'doc.author', '_actions'])
 #livetable('ditaothtmlimporter' $columns $columnsProperties $options)
-{{/velocity}}</content>
+
+{{html clean="false"}}
+  &lt;div class="buttonwrapper"&gt;
+    &lt;a href="" id="startBulkImportBtn" class="button"&gt;$services.localization.render('ditaothtmlimporter.home.startBulkImport')&lt;/a&gt;
+    &lt;a href="$xwiki.getURL('DITAOTHTMLImporter.ImportStatus', 'view', 'jobId=DITAOTHTMLBulkImport')" id="viewLastBulkImportBtn" class="button"&gt;$services.localization.render('ditaothtmlimporter.home.viewLastBulkImportStatus')&lt;/a&gt;
+  &lt;/div&gt;
+{{/html}}
+{{/velocity}}
+
+{{addCheckboxColumnToLivetable title="ditaothtmlimporter.livetable.selectForBulkAction" livetable="ditaothtmlimporter" column="doc.fullName" buttonId="startBulkImportBtn" serviceDocument="DITAOTHTMLImporter.Code.StartBulkImportService" urlParams="" /}}</content>
+  <object>
+    <name>DITAOTHTMLImporter.WebHome</name>
+    <number>0</number>
+    <className>XWiki.JavaScriptExtension</className>
+    <guid>ee000138-d61a-40ab-8b9e-1697e9ebcbdb</guid>
+    <class>
+      <name>XWiki.JavaScriptExtension</name>
+      <customClass/>
+      <customMapping/>
+      <defaultViewSheet/>
+      <defaultEditSheet/>
+      <defaultWeb/>
+      <nameField/>
+      <validationScript/>
+      <cache>
+        <cache>0</cache>
+        <defaultValue>long</defaultValue>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>cache</name>
+        <number>5</number>
+        <prettyName>Caching policy</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>long|short|default|forbid</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </cache>
+      <code>
+        <contenttype>PureText</contenttype>
+        <disabled>0</disabled>
+        <editor>PureText</editor>
+        <name>code</name>
+        <number>2</number>
+        <prettyName>Code</prettyName>
+        <rows>20</rows>
+        <size>50</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.TextAreaClass</classType>
+      </code>
+      <name>
+        <disabled>0</disabled>
+        <name>name</name>
+        <number>1</number>
+        <prettyName>Name</prettyName>
+        <size>30</size>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.StringClass</classType>
+      </name>
+      <parse>
+        <disabled>0</disabled>
+        <displayFormType>select</displayFormType>
+        <displayType>yesno</displayType>
+        <name>parse</name>
+        <number>4</number>
+        <prettyName>Parse content</prettyName>
+        <unmodifiable>0</unmodifiable>
+        <classType>com.xpn.xwiki.objects.classes.BooleanClass</classType>
+      </parse>
+      <use>
+        <cache>0</cache>
+        <disabled>0</disabled>
+        <displayType>select</displayType>
+        <freeText>forbidden</freeText>
+        <largeStorage>0</largeStorage>
+        <multiSelect>0</multiSelect>
+        <name>use</name>
+        <number>3</number>
+        <prettyName>Use this extension</prettyName>
+        <relationalStorage>0</relationalStorage>
+        <separator> </separator>
+        <separators>|, </separators>
+        <size>1</size>
+        <unmodifiable>0</unmodifiable>
+        <values>currentPage|onDemand|always</values>
+        <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+      </use>
+    </class>
+    <property>
+      <cache>long</cache>
+    </property>
+    <property>
+      <code>document.addEventListener('xwiki:livetable:ditaothtmlimporter:checkboxes:success', function() {
+  window.location = "$xwiki.getURL('DITAOTHTMLImporter.ImportStatus', 'view', 'jobId=DITAOTHTMLBulkImport')";
+});
+
+document.addEventListener('xwiki:livetable:ditaothtmlimporter:checkboxes:failure', function() {
+  new XWiki.widgets.Notification("$escapetool.javascript($services.localization.render('ditaothtmlimporter.home.failedToStartAction'))", 'error');
+});</code>
+    </property>
+    <property>
+      <name/>
+    </property>
+    <property>
+      <parse>1</parse>
+    </property>
+    <property>
+      <use>currentPage</use>
+    </property>
+  </object>
 </xwikidoc>

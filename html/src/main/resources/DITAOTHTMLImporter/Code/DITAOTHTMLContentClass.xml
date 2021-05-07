@@ -46,6 +46,31 @@
     <defaultWeb/>
     <nameField/>
     <validationScript/>
+    <managedTags>
+      <cache>0</cache>
+      <customDisplay/>
+      <defaultValue/>
+      <disabled>0</disabled>
+      <displayType>input</displayType>
+      <freeText/>
+      <hint/>
+      <largeStorage>0</largeStorage>
+      <multiSelect>0</multiSelect>
+      <name>managedTags</name>
+      <number>2</number>
+      <picker>1</picker>
+      <prettyName>managedTags</prettyName>
+      <relationalStorage>1</relationalStorage>
+      <separator>|</separator>
+      <separators>|, </separators>
+      <size>1</size>
+      <sort/>
+      <unmodifiable>0</unmodifiable>
+      <validationMessage/>
+      <validationRegExp/>
+      <values/>
+      <classType>com.xpn.xwiki.objects.classes.StaticListClass</classType>
+    </managedTags>
     <url>
       <customDisplay/>
       <disabled>0</disabled>
